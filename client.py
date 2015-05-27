@@ -78,6 +78,10 @@ class Client:
         stream.close()
 
     def handle_pair(self, request):
+        print("请求配对的控制设备的识别指纹为 {}".format(request['device']))
+        if (input("此识别指纹是否与控制设备上显示的一致？(Y/N)").upper() != 'Y'):
+            return {'message': "配对请求被拒绝"}
+
         username = input("请输入帐号：")
         password = input("请输入密码：")
         credential = json.dumps([username, password])
@@ -112,8 +116,13 @@ class Client:
         except InvalidToken:
             return {'error': "请重新配对"}
         credential = json.loads(credential.decode())
-        result = subprocess.check_output([lockman, 'unlock'] + credential)
-        return {'status': result.decode()}
+        try:
+            result = subprocess.check_output([lockman, 'unlock'] + credential)
+        except CalledProcessError as ex:
+            # 调用失败时返回错误代码
+            return {'message': "解锁失败，错误代码 {}".format(ex.returncode)}
+        else:
+            return {'message': "解锁成功"}
 
     def _get_credential_fernet(self, cert):
         return Fernet(base64.urlsafe_b64encode(hashlib.sha256(cert).digest()))
