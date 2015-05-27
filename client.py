@@ -6,6 +6,7 @@ import json
 import hashlib
 import os
 import socket
+import ssl
 import subprocess
 from uuid import uuid4
 
@@ -62,7 +63,10 @@ class Client:
     def connect(self):
         stream = yield TCPClient().connect(self.config['host'], self.config['port'])
         yield stream.write(dumpb({'device': self.config['device'], 'name': socket.gethostname()}))
-        stream = yield stream.start_tls(False)
+
+        tls_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        tls_context.check_hostname = False
+        stream = yield stream.start_tls(False, tls_context)
 
         self.load_config()
         cert = stream.socket.getpeercert(True)
