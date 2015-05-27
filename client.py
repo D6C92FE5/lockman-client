@@ -79,7 +79,7 @@ class Client:
 
     def handle_pair(self, request):
         print("请求配对的控制设备的识别指纹为 {}".format(request['device']))
-        if (input("此识别指纹是否与控制设备上显示的一致？(Y/N)").upper() != 'Y'):
+        if input("此识别指纹是否与控制设备上显示的一致？(Y/N)").upper() != 'Y':
             return {'message': "配对请求被拒绝"}
 
         username = input("请输入帐号：")
@@ -118,7 +118,7 @@ class Client:
         credential = json.loads(credential.decode())
         try:
             result = subprocess.check_output([lockman, 'unlock'] + credential)
-        except CalledProcessError as ex:
+        except subprocess.CalledProcessError as ex:
             # 调用失败时返回错误代码
             return {'message': "解锁失败，错误代码 {}".format(ex.returncode)}
         else:
