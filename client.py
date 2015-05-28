@@ -101,14 +101,18 @@ class Client:
             return {'error': "未配对"}
         lockman = self.config['locking-manager-bin']
         result = subprocess.check_output([lockman, 'status'])
-        return {'status': result.decode()[:-1]}
+        return {'status': result.decode().strip()}
 
     def handle_lock(self, request):
         if request['device'] not in self.config['credentials']:
             return {'error': "未配对"}
         lockman = self.config['locking-manager-bin']
-        result = subprocess.check_output([lockman, 'lock'])
-        return {'status': result.decode()}
+        try:
+            subprocess.check_call([lockman, 'lock'])
+        except subprocess.CalledProcessError as ex:
+            return {'message': "锁定失败，错误代码 {}".format(ex.returncode)}
+        else:
+            return {'message': "锁定成功"}
 
     def handle_unlock(self, request):
         if request['device'] not in self.config['credentials']:
@@ -121,7 +125,7 @@ class Client:
             return {'error': "请重新配对"}
         credential = json.loads(credential.decode())
         try:
-            result = subprocess.check_output([lockman, 'unlock'] + credential)
+            subprocess.check_call([lockman, 'unlock'] + credential)
         except subprocess.CalledProcessError as ex:
             # 调用失败时返回错误代码
             return {'message': "解锁失败，错误代码 {}".format(ex.returncode)}
